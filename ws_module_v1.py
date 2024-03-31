@@ -1,5 +1,5 @@
 import time
-
+import logging
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -8,12 +8,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import StaleElementReferenceException
 
 """ 
-2. function for date to-from. 
-date will be entered through command line
-3. check_the_act function adding a try loop at many a times it throws exception
-and then the district has to be skipped. 
-4. new error found - the page is not loading probably after clicking search
-so, adding some time before clicking search for page to load. 
+1. re-birth of FIR_modules.py
+2. number of pages reduced to 8. 
+3. logging added
 """
 
 
@@ -51,6 +48,7 @@ def police_stations(driver):
 
 
 # select police station
+# unused function as of 31.03.2024
 def select_police_station(selected_police, driver):
     # this will select police station as per there names listed in
     # list created by police_stations() function.
@@ -111,10 +109,12 @@ def check_the_act(driver, poa_dir_district,
                         poa_dir_fir.append(cells[5].text)
                         poa_dir_date.append(cells[6].text)
                         poa_dir_sec.append(cells[8].text)
-            print("no error recorded")
+            # logging
+            logging.info("checked for PoA", exc_info=True)
             break
         except StaleElementReferenceException:
-            print("the page was rotten. re-run")
+            #logging
+            logging.info("page was rotten", exc_info=True)
             driver.refresh()
             i += 1
             continue
@@ -146,8 +146,11 @@ def download_repeat(some_list, driver,
             new_list[i].click()
             time.sleep(5)
             i += 1
-        except Exception as e:
-            print(e)
+            # logging
+            logging.info("checked for PoA", exc_info=True)
+        except:
+            # logging
+            logging.info("major error", exc_info=True)
             i += 1
             continue
 
@@ -158,6 +161,8 @@ def second_page(driver):
                              'tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody/tr[52]'
                              '/td/table/tbody/tr/td[2]/a')
     p2.click()
+    # logging
+    logging.info("p2", exc_info=True)
 
 
 def third_page(driver):
@@ -167,6 +172,8 @@ def third_page(driver):
                              "/tbody/tr[52]/td/table/tbody/tr/td[3]/a"
                              )
     p3.click()
+    # logging
+    logging.info("p3", exc_info=True)
 
 
 def forth_page(driver):
@@ -176,6 +183,8 @@ def forth_page(driver):
                              "/tr[52]/td/table/tbody/tr/td[4]/a"
                              )
     p4.click()
+    # logging
+    logging.info("p4", exc_info=True)
 
 
 def fifth_page(driver):
@@ -185,6 +194,8 @@ def fifth_page(driver):
                              "/tr[52]/td/table/tbody/tr/td[5]/a"
                              )
     p5.click()
+    # logging
+    logging.info("p5", exc_info=True)
 
 
 def sixth_page(driver):
@@ -194,6 +205,8 @@ def sixth_page(driver):
                              "/tr[52]/td/table/tbody/tr/td[6]/a"
                              )
     p6.click()
+    # logging
+    logging.info("p6", exc_info=True)
 
 
 def seventh_page(driver):
@@ -203,7 +216,8 @@ def seventh_page(driver):
                              "/tr[52]/td/table/tbody/tr/td[7]/a"
                              )
     p7.click()
-
+    # logging
+    logging.info("p7", exc_info=True)
 
 def eightth_page(driver):
     p8 = driver.find_element(By.XPATH,
@@ -212,6 +226,8 @@ def eightth_page(driver):
                              "/tr[52]/td/table/tbody/tr/td[8]/a"
                              )
     p8.click()
+    # logging
+    logging.info("p8", exc_info=True)
 
 
 def ninenth_page(driver):
@@ -221,101 +237,5 @@ def ninenth_page(driver):
                              "/tr[52]/td/table/tbody/tr/td[9]/a"
                              )
     p9.click()
-
-
-def tenth_page(driver):
-    p10 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[10]/a"
-                              )
-    p10.click()
-
-
-def next_page(driver):
-    next_p = driver.find_element(By.XPATH, "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                                           "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                                           "/tr[52]/td/table/tbody/tr/td[11]/a"
-                                 )
-    next_p.click()
-
-
-def twelth_page(driver):
-    p12 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[3]/a"
-                              )
-    p12.click()
-
-
-def thirteen_page(driver):
-    p13 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[4]/a"
-                              )
-    p13.click()
-
-
-def fourteen_page(driver):
-    p14 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[5]/a"
-                              )
-    p14.click()
-
-
-def fifteen_pagge(driver):
-    p15 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[6]/a"
-                              )
-    p15.click()
-
-
-def sixteen_page(driver):
-    p16 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[7]/a"
-                              )
-    p16.click()
-
-
-def seventeen_page(driver):
-    p17 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[8]/a"
-                              )
-    p17.click()
-
-
-def eighteen_page(driver):
-    p18 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[9]/a"
-                              )
-    p18.click()
-
-
-def ninteen_page(driver):
-    p19 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[10]/a"
-                              )
-    p19.click()
-
-
-def twenty_page(driver):
-    p20 = driver.find_element(By.XPATH,
-                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
-                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
-                              "/tr[52]/td/table/tbody/tr/td[11]/a"
-                              )
-    p20.click()
+    # logging
+    logging.info("p9", exc_info=True)

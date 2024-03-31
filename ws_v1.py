@@ -5,56 +5,26 @@ b. iterating over year by creating outer loop.
 
 """
 
-import traceback
 import os
 import time
-from sys import argv
-
 import pandas as pd
+import datetime
+import logging
+import ws_module_v1
+
+
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
-from selenium.common.exceptions import NoSuchElementException
-
-import ws_module_v1
 from ws_module_proxy_v1 import list_of_proxies
 
-# calculate the time spent
-start = time.time()
-# constants
-# define download directory
-base_directory = r'/home/sangharsh/Documents/PoA/data/FIR/feb_24'
-download_directory = os.path.join(base_directory, "copies", f'{argv[1]} _ {argv[2]}')
-
-if not download_directory:
-    os.mkdir(download_directory)
-
+# 1. constants
+# 1.a logging
+logging.basicConfig(filename='logging_info.log', format='%(asctime)s - %(message)s')
+# base directory
+base_directory = r'/home/sangharsh/Documents/PoA/data/FIR/y_23'
 main_url = r'https://citizen.mahapolice.gov.in/Citizen/MH/PublishedFIRs.aspx'
-
-# list of districts
-ALL_Districts = ['AHMEDNAGAR', 'AKOLA', 'AMRAVATI CITY', 'AMRAVATI RURAL', 'BEED', 'BHANDARA', 'BULDHANA',
-                 'CHANDRAPUR', 'CHHATRAPATI SAMBHAJINAGAR CITY', 'CHHATRAPATI SAMBHAJINAGAR (RURAL)',
-                 'DHULE', 'GADCHIROLI', 'GONDIA', 'HINGOLI', 'JALGAON', 'JALNA',
-                 'KOLHAPUR', 'LATUR', 'Mira-Bhayandar, Vasai-Virar Police Commissioner',
-                 'NAGPUR CITY', 'NAGPUR RURAL', 'NANDED', 'NANDURBAR',
-                 'NASHIK CITY', 'NASHIK RURAL', 'NAVI MUMBAI', 'OSMANABAD', 'PALGHAR', 'PARBHANI',
-                 'PIMPRI-CHINCHWAD', 'PUNE CITY', 'PUNE RURAL', 'RAIGAD',
-                 'RAILWAY MUMBAI', 'RAILWAY NAGPUR', 'RAILWAY PUNE', 'RATNAGIRI', 'SANGLI', 'SATARA',
-                 'SINDHUDURG', 'SOLAPUR CITY', 'SOLAPUR RURAL', 'THANE CITY', 'THANE RURAL', 'WARDHA',
-                 'WASHIM', 'YAVATMAL']
-
-
-def open_page():
-    """
-    open page and refresh it. without refreshing it dose not work
-    """
-    driver.get(main_url)
-    driver.refresh()
-    # checking
-    print('page opened and refreshed')
-
-
 # lists for taking cvs output
 poa_dir_district = []
 poa_dir_police = []
@@ -63,14 +33,45 @@ poa_dir_FIR = []
 poa_dir_date = []
 poa_dir_sec = []
 
+# start to end dates for year
+start = datetime.date(2023, 1, 1)
+end = datetime.date(2023, 12, 31)
 
-# terminal output
-print(f'{argv[1]}\n')
+# list of districts
+ALL_Districts = ['AHMEDNAGAR', 'AKOLA', 'AMRAVATI CITY', 'AMRAVATI RURAL', 'BEED', 'BHANDARA', 'BULDHANA',
+                 'CHANDRAPUR', 'CHHATRAPATI SAMBHAJINAGAR CITY', 'CHHATRAPATI SAMBHAJINAGAR (RURAL)',
+                 'DHARASHIV', 'DHULE', 'GADCHIROLI', 'GONDIA', 'HINGOLI', 'JALGAON', 'JALNA',
+                 'KOLHAPUR', 'LATUR', 'Mira-Bhayandar, Vasai-Virar Police Commissioner',
+                 'NAGPUR CITY', 'NAGPUR RURAL', 'NANDED', 'NANDURBAR',
+                 'NASHIK CITY', 'NASHIK RURAL', 'NAVI MUMBAI', 'PALGHAR', 'PARBHANI',
+                 'PIMPRI-CHINCHWAD', 'PUNE CITY', 'PUNE RURAL', 'RAIGAD',
+                 'RAILWAY MUMBAI', 'RAILWAY NAGPUR', 'RAILWAY PUNE', 'RATNAGIRI', 'SANGLI', 'SATARA',
+                 'SINDHUDURG', 'SOLAPUR CITY', 'SOLAPUR RURAL', 'THANE CITY', 'THANE RURAL', 'WARDHA',
+                 'WASHIM', 'YAVATMAL']
 
-for name in ALL_Districts:
-    try:
-        # temporary print statment
-        print(f'\n{name}\n')
+# function for opening page. can it be shifted to module?
+def open_page():
+    """
+    open page and refresh it. without refreshing it dose not work
+    """
+    driver.get(main_url)
+    driver.refresh()
+
+# first loop defining date range
+while start < end:
+    d2 = start + datetime.timedelta(2)
+    from_date = start.strftime("%d%m%Y")
+    to_date = d2.strftime("%d%m%Y")
+
+    # constant for outer loop
+    # download directory path
+    download_directory = os.path.join(base_directory, "copies", f'{from_date} _ {to_date}')
+    # create directory if not available.
+    if not download_directory:
+        os.mkdir(download_directory)
+
+
+    for name in ALL_Districts:
         # variables
         number_of_cases_on_all_pages = []
         poa_dictionary = []
@@ -106,49 +107,48 @@ for name in ALL_Districts:
             'sslProxy': myProxy[ALL_Districts.index(name)],
             'noProxy': ''  # set this value as desired
         })
-
+        #check - pycharm saying argument 'proxy' is unexpected
         driver = webdriver.Firefox(options=options, proxy=proxy)
         open_page()
+        #logging
+        logging.info("page opened", exc_info=True)
         # enter the date through terminal argument
-        ws_module_v1.enter_date(date1=argv[1], date2=argv[2], driver=driver)
-        # checking
-        print('date entered.')
+        ws_module_v1.enter_date(date1=from_date, date2=to_date, driver=driver)
+        #logging
+        logging.info(f"from {from_date} to {to_date}", exc_info=True)
         # enter the name of the district. select one from the list
-
         ws_module_v1.district_selection(name, driver=driver)
+        #logging
+        logging.info(f"{name} district", exc_info=True)
         # creation of list. These lists will be converted to dictionary to write to csv
-        # check
-        print('district name entered\n')
-        # dist_name.append(name)
         # call the value of records to view @ 50
         time.sleep(5)
-        try:
-            ws_module_v1.view_record(driver)
-        except NoSuchElementException:
-            print('page not loading')
-            continue
+        ws_module_v1.view_record(driver)
+        # logging
+        logging.info("what is it?", exc_info=True)
         # call search
         ws_module_v1.search(driver=driver)
-        # check
-        print('searched clicked now view 50 records')
+        # logging
+        logging.info("search clicked", exc_info=True)
+        # view 50 records, that is max, per page
         record = ws_module_v1.number_of_records(driver=driver)
+        logging.info("view 50", exc_info=True)
         # for terminal output and separate file output
         if record != '':
-            print('record found')
+            logging.info("records found", exc_info=True)
         else:
-            print('record not found')
+            logging.info(f"records found for {name}", exc_info=True)
             driver.close()
             continue
 
         if int(record) > 0:
-            # check
-            print('\ncheking the act')
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
                                                   poa_dir_FIR,
                                                   poa_dir_date,
                                                   poa_dir_sec)
+            logging.info("checking if PoA case", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
             else:
@@ -156,8 +156,10 @@ for name in ALL_Districts:
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                logging.info("all FIRs downloaded", exc_info=True)
         else:
             driver.close()
+            logging.info(f"no PoA FIR {name}")
             time.sleep(3)
             # this is very rare
             # no records on page so the PoA cases on page will be 0.
@@ -165,9 +167,8 @@ for name in ALL_Districts:
             continue
 
         if int(record) > 50:
-            # check
-            print('\ncheking the act')
             ws_module_v1.second_page(driver)
+            logging.info("p2", exc_info=True)
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
@@ -175,129 +176,173 @@ for name in ALL_Districts:
                                                   poa_dir_date,
                                                   poa_dir_sec)
 
+            logging.info("checking for PoA", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
+                logging.info(f"no PoA{name}", exc_info=True)
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                logging.info("all FIRs downloaded", exc_info=True)
         else:
-            # append the list of dist PoAs with total sum of number of cases on all pages
-            # for records up to 50 it will be only one record
-            # - that is from 0 to 50, if at all available
+            logging.info("no PoA on p2", exc_info=True)
             driver.close()
             continue
 
         if int(record) > 100:
-            # check
-            print('\ncheking the act on p3')
+            #opening p3
             ws_module_v1.third_page(driver)
+            #logging
+            logging.info("p3", exc_info=True)
+            #checking if PoA is available
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
                                                   poa_dir_FIR,
                                                   poa_dir_date,
                                                   poa_dir_sec)
+            #logging
+            logging.info("cheked if PoA on p3", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
+                logging.info("no PoA on p3", exc_info=True)
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                logging.info(f"all FIRs downloaded {name}", exc_info=True)
 
         else:
             driver.close()
+            #logging
+            logging.info(f"finished {name}", exc_info=True)
             continue
 
         if int(record) > 150:
-            # check
-            print('\ncheking the act on p4')
+            # opening p4
             ws_module_v1.forth_page(driver)
+            # logging
+            logging.info(f"p4 opened for {name}", exc_info=True)
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
                                                   poa_dir_FIR,
                                                   poa_dir_date,
                                                   poa_dir_sec)
+            # logging
+            logging.info(f"checking for PoA in {name}", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
+                #logging
+                logging.info(f"no PoA on p4 at {name}", exc_info=True)
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
+                #downloading FIR
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                #logging
+                logging.info(f"all FIRs downloaded {name}", exc_info=True)
         else:
-            driver.quit()
+            #logging
+            logging.info(f"no PoA on p4 for {name}", exc_info=True)
+            driver.close()
             continue
 
         if int(record) > 200:
-            # check
-            print('\ncheking the act on p5')
             ws_module_v1.fifth_page(driver)
+            # logging
+            logging.info(f"entered p5 for {name}", exc_info=True)
+            # cheking for PoA
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
                                                   poa_dir_FIR,
                                                   poa_dir_date,
                                                   poa_dir_sec)
+            #logging
+            logging.info(f"checking for act on p5 for {name}", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
+                # downloading FIR
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                #logging
+                logging.info(f"all FIRs downloaded {name}", exc_info=True)
         else:
+            #logging
+            logging.info(f"no PoA on page 5 in {name}", exc_info=True)
             driver.close()
             continue
 
         if int(record) > 250:
-            # check
-            print('\ncheking the act on p6')
             ws_module_v1.sixth_page(driver)
+            # logging
+            logging.info(f"entered p6 of {name}", exc_info=True)
+            # cheking for PoA
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
                                                   poa_dir_FIR,
                                                   poa_dir_date,
                                                   poa_dir_sec)
+            # logging
+            logging.info(f"checked for PoA on p6 for {name}", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
+                #logging
+                logging.info(f"no PoA on p6 at {name}", exc_info=True)
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
+                # downloading FIR
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                # logging
+                logging.info(f"all FIRs downloaded {name}", exc_info=True)
         else:
+            #logging
+            logging.info(f"no PoA on p6 for {name}", exc_info=True)
             driver.close()
             continue
 
         if int(record) > 300:
-            # check
-            print('\ncheking the act on p7')
             ws_module_v1.seventh_page(driver)
+            # logging
+            logging.info(f"entered p7 for {name}", exc_info=True)
+            # cheking for PoA
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
                                                   poa_dir_year,
                                                   poa_dir_FIR,
                                                   poa_dir_date,
                                                   poa_dir_sec)
+            #logging
+            logging.info(f"checked for PoA on p7 for {name}", exc_info=True)
             if not poa_cases:
                 number_of_cases_on_all_pages.append(0)
+                logging.info(f"no PoA on p7 in {name}", exc_info=True)
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
+                #downloading FIRs
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                #logging
+                logging.info(f"all FIRs downloaded {name}", exc_info=True)
         else:
+            # logging
+            logging.info(f"no PoA on p7 for {name}", exc_info=True)
             driver.close()
             continue
 
         if int(record) > 350:
-            # check
-            print('\ncheking the act on p8')
             ws_module_v1.eightth_page(driver)
             poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                   poa_dir_police,
@@ -310,277 +355,27 @@ for name in ALL_Districts:
             else:
                 number_of_cases_on_page = int(len(poa_cases))
                 number_of_cases_on_all_pages.append(number_of_cases_on_page)
+                # downloading PoA FIR
                 ws_module_v1.download_repeat(poa_cases, driver,
                                             )
+                # logging
+                logging.info(f"all FIRs downloaded {name}", exc_info=True)
         else:
             driver.close()
+            # logging
+            logging.info(f"closing dist {name}", exc_info=True)
             continue
 
-        if int(record) > 400:
-            # check
-            print('\ncheking the act on p9')
-            ws_module_v1.ninenth_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
+    # logging
+    logging.info(f"creating file from {from_date} to {to_date}", exc_info=True)
+    poa_dir = {"District": poa_dir_district, "Police_Station": poa_dir_police,
+               "FIR": poa_dir_FIR, "Date_&_Time": poa_dir_date, "Acts_&_Sections": poa_dir_sec}
+    # dictionary to data frame
+    df = pd.DataFrame(
+        {key: pd.Series(value) for key, value in poa_dir.items()})
+    # taking csv output with date as part of file name
+    df.to_csv(
+        os.path.join(base_directory, "poa_summary", f'main_from_{from_date}_to_{to_date}.csv'))
+    # logging
+    logging.info(f"csv file created", exc_info=True)
 
-        if int(record) > 450:
-            # check
-            print('\ncheking the act')
-            ws_module_v1.tenth_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 500:
-            # check
-            print('\ncheking the act p11')
-            ws_module_v1.next_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 550:
-            # check
-            print('\ncheking the act p12')
-            ws_module_v1.twelth_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 600:
-            # check
-            print('\ncheking the act on p13')
-            ws_module_v1.thirteen_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 650:
-            # check
-            print('\ncheking the act p14')
-            ws_module_v1.fourteen_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 700:
-            # check
-            print('\ncheking the act p15')
-            ws_module_v1.next_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 750:
-            # check
-            print('\ncheking the act p16')
-            ws_module_v1.sixteen_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 800:
-            # check
-            print('\ncheking the act p17')
-            ws_module_v1.seventeen_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 850:
-            # check
-            print('\ncheking the act p18')
-            ws_module_v1.eighteen_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 900:
-            # check
-            print('\ncheking the act p19')
-            ws_module_v1.ninteen_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            continue
-
-        if int(record) > 950:
-            # check
-            print('\ncheking the act p20')
-            ws_module_v1.twenty_page(driver)
-            poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
-                                                  poa_dir_police,
-                                                  poa_dir_year,
-                                                  poa_dir_FIR,
-                                                  poa_dir_date,
-                                                  poa_dir_sec)
-            if not poa_cases:
-                number_of_cases_on_all_pages.append(0)
-            else:
-                number_of_cases_on_page = int(len(poa_cases))
-                number_of_cases_on_all_pages.append(number_of_cases_on_page)
-                ws_module_v1.download_repeat(poa_cases, driver,
-                                            )
-        else:
-            driver.close()
-            # check
-            print('all pages finished')
-
-    except Exception:
-        print(traceback.format_exc())
-        # needs something for terminal output.
-        continue
-
-# 29.03.24 for now there is problem in terminal output and statesticla summary
-# as the exception is not adding data to the basic structure. like 0 or skiped etc
-poa_dir = {"District": poa_dir_district, "Police_Station": poa_dir_police,
-           "FIR": poa_dir_FIR, "Date_&_Time": poa_dir_date, "Acts_&_Sections": poa_dir_sec}
-df = pd.DataFrame(
-    {key: pd.Series(value) for key, value in poa_dir.items()})
-df.to_csv(
-    os.path.join(base_directory, "poa_summary", f'{argv[3]}_from_{argv[1]}_to_{argv[2]}.csv'))
-end = time.time()
-print(f'\n{end - start}\n')
