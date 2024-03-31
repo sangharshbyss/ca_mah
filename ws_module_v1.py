@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 1. re-birth of FIR_modules.py
 2. number of pages reduced to 8. 
 3. logging added
-4. Deleting the refresh added in check availabe - new approach adopted in main file
+4. Deleting the refresh added in check available - new approach adopted in main file
 By this approch - 
 the while loop will be initiated again for same date range if there's any exception
 """
