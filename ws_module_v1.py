@@ -5,15 +5,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import StaleElementReferenceException
 
 """ 
 1. re-birth of FIR_modules.py
 2. number of pages reduced to 8. 
 3. logging added
+4. Deleting the refresh added in check availabe - new approach adopted in main file
+By this approch - 
+the while loop will be initiated again for same date range if there's any exception
 """
 
-
+# for logging
+logger = logging.getLogger(__name__)
 def enter_date(date1, date2, driver):
     WebDriverWait(driver, 160).until(
         ec.presence_of_element_located((By.CSS_SELECTOR,
@@ -86,38 +89,29 @@ def check_the_act(driver, poa_dir_district,
 
     # check for PoA in table.
     # identify table first
-    i = 0
-    while i < 3:
-        try:
-            WebDriverWait(driver, 10).until(
-                ec.presence_of_element_located((
-                    By.CSS_SELECTOR, "#ContentPlaceHolder1_gdvDeadBody")))
-            table = driver.find_element(By.ID, "ContentPlaceHolder1_gdvDeadBody")
-            rows = table.find_elements(By.TAG_NAME, "tr")
-            # iterate over each row
-            for row in rows:
-                cells = row.find_elements(By.TAG_NAME, "td")
-                # iterate over each cell
-                for cell in cells:
-                    cell_text = cell.text
-                    # if the act is found, count it. and take details.
-                    if "अनुसूचीत जाती आणि अनुसूचीत" in cell_text:
-                        poa_list.append(row.text)
-                        poa_dir_district.append(cells[2].text)
-                        poa_dir_police.append(cells[3].text)
-                        poa_dir_year.append(cells[4].text)
-                        poa_dir_fir.append(cells[5].text)
-                        poa_dir_date.append(cells[6].text)
-                        poa_dir_sec.append(cells[8].text)
-            # logging
-            logging.info("checked for PoA", exc_info=True)
-            break
-        except StaleElementReferenceException:
-            #logging
-            logging.info("page was rotten", exc_info=True)
-            driver.refresh()
-            i += 1
-            continue
+    WebDriverWait(driver, 10).until(
+        ec.presence_of_element_located((
+            By.CSS_SELECTOR, "#ContentPlaceHolder1_gdvDeadBody")))
+    table = driver.find_element(By.ID, "ContentPlaceHolder1_gdvDeadBody")
+    rows = table.find_elements(By.TAG_NAME, "tr")
+    # iterate over each row
+    for row in rows:
+        cells = row.find_elements(By.TAG_NAME, "td")
+        # iterate over each cell
+        for cell in cells:
+            cell_text = cell.text
+            # if the act is found, count it. and take details.
+            if "अनुसूचीत जाती आणि अनुसूचीत" in cell_text:
+                poa_list.append(row.text)
+                poa_dir_district.append(cells[2].text)
+                poa_dir_police.append(cells[3].text)
+                poa_dir_year.append(cells[4].text)
+                poa_dir_fir.append(cells[5].text)
+                poa_dir_date.append(cells[6].text)
+                poa_dir_sec.append(cells[8].text)
+    # logging
+    logging.debug("checked for PoA", exc_info=True)
+        
     return poa_list
 
 
@@ -147,10 +141,10 @@ def download_repeat(some_list, driver,
             time.sleep(5)
             i += 1
             # logging
-            logging.info("checked for PoA", exc_info=True)
+            logging.debug("checked for PoA", exc_info=True)
         except:
             # logging
-            logging.info("major error", exc_info=True)
+            logging.debug("major error", exc_info=True)
             i += 1
             continue
 
@@ -162,7 +156,7 @@ def second_page(driver):
                              '/td/table/tbody/tr/td[2]/a')
     p2.click()
     # logging
-    logging.info("p2", exc_info=True)
+    logging.debug("p2", exc_info=True)
 
 
 def third_page(driver):
@@ -173,7 +167,7 @@ def third_page(driver):
                              )
     p3.click()
     # logging
-    logging.info("p3", exc_info=True)
+    logging.debug("p3", exc_info=True)
 
 
 def forth_page(driver):
@@ -184,7 +178,7 @@ def forth_page(driver):
                              )
     p4.click()
     # logging
-    logging.info("p4", exc_info=True)
+    logging.debug("p4", exc_info=True)
 
 
 def fifth_page(driver):
@@ -195,7 +189,7 @@ def fifth_page(driver):
                              )
     p5.click()
     # logging
-    logging.info("p5", exc_info=True)
+    logging.debug("p5", exc_info=True)
 
 
 def sixth_page(driver):
@@ -206,7 +200,7 @@ def sixth_page(driver):
                              )
     p6.click()
     # logging
-    logging.info("p6", exc_info=True)
+    logging.debug("p6", exc_info=True)
 
 
 def seventh_page(driver):
@@ -217,7 +211,7 @@ def seventh_page(driver):
                              )
     p7.click()
     # logging
-    logging.info("p7", exc_info=True)
+    logging.debug("p7", exc_info=True)
 
 def eightth_page(driver):
     p8 = driver.find_element(By.XPATH,
@@ -227,7 +221,7 @@ def eightth_page(driver):
                              )
     p8.click()
     # logging
-    logging.info("p8", exc_info=True)
+    logging.debug("p8", exc_info=True)
 
 
 def ninenth_page(driver):
@@ -238,4 +232,4 @@ def ninenth_page(driver):
                              )
     p9.click()
     # logging
-    logging.info("p9", exc_info=True)
+    logging.debug("p9", exc_info=True)
