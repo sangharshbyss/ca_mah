@@ -35,7 +35,7 @@ def main():
 
     # 1. constants
     # 1.b logging
-    logging.basicConfig(filename=os.path.join(base_directory, 'loggingg_info.log'),
+    logging.basicConfig(filename=os.path.join(base_directory, 'debug.log'),
                         format='%(name)s:: %(levelname)s:: %(asctime)s - %(message)s',
                         level=logging.DEBUG)
 
@@ -52,7 +52,7 @@ def main():
 
     # 1.e start to end dates for year
     start = datetime.date(2023, 1, 1)
-    end = datetime.date(2023, 12, 31)
+    end = datetime.date(2023, 3, 31)
 
     # 1.f ist of districts
     ALL_Districts = ['AHMEDNAGAR', 'AKOLA', 'AMRAVATI CITY', 'AMRAVATI RURAL', 'BEED', 'BHANDARA', 'BULDHANA',
@@ -82,7 +82,8 @@ def main():
 
         # constant for outer loop
         # download directory path
-        download_directory = os.path.join(base_directory, "copies", f'{from_date} _ {to_date}')
+        download_directory = os.path.join(base_directory,
+                                          "copies", f'{from_date} _ {to_date}')
         # create directory if not available.
         if not download_directory:
             os.mkdir(download_directory)
@@ -129,33 +130,33 @@ def main():
                 driver = webdriver.Firefox(options=options, proxy=proxy)
                 open_page()
                 # logging
-                logging.debug("page opened", exc_info=True)
+                logging.error("page opened", exc_info=True)
                 # enter the date through terminal argument
                 ws_module_v1.enter_date(date1=from_date, date2=to_date, driver=driver)
                 # logging
-                logging.debug(f"from {from_date} to {to_date}", exc_info=True)
+                logging.error(f"from {from_date} to {to_date}", exc_info=True)
                 # enter the name of the district. select one from the list
                 ws_module_v1.district_selection(name, driver=driver)
                 # logging
-                logging.debug(f"{name} district", exc_info=True)
+                logging.error(f"{name} district", exc_info=True)
                 # creation of list. These lists will be converted to dictionary to write to csv
                 # call the value of records to view @ 50
                 time.sleep(5)
                 ws_module_v1.view_record(driver)
                 # loggingg
-                logging.debug("what is it?", exc_info=True)
+                logging.error("what is it?", exc_info=True)
                 # call search
                 ws_module_v1.search(driver=driver)
                 # loggingg
-                logging.debug("search clicked", exc_info=True)
+                logging.error("search clicked", exc_info=True)
                 # view 50 records, that is max, per page
                 record = ws_module_v1.number_of_records(driver=driver)
                 logging.debug("view 50", exc_info=True)
                 # for terminal output and separate file output
                 if record != '':
-                    logging.debug("records found", exc_info=True)
+                    logging.error("records found", exc_info=True)
                 else:
-                    logging.debug(f"records found for {name}", exc_info=True)
+                    logging.error(f"records found for {name}", exc_info=True)
                     driver.close()
                     continue
 
@@ -174,10 +175,10 @@ def main():
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
-                        logging.debug("all FIRs downloaded", exc_info=True)
+                        logging.error("all FIRs downloaded", exc_info=True)
                 else:
                     driver.close()
-                    logging.debug(f"no PoA FIR {name}")
+                    logging.error(f"no PoA FIR {name}")
                     time.sleep(3)
                     # this is very rare
                     # no records on page so the PoA cases on page will be 0.
@@ -194,7 +195,7 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
 
-                    logging.debug("checking for PoA", exc_info=True)
+                    logging.error("checking for PoA", exc_info=True)
                     if not poa_cases:
                         number_of_cases_on_all_pages.append(0)
                         logging.debug(f"no PoA{name}", exc_info=True)
@@ -203,9 +204,9 @@ def main():
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
-                        logging.debug("all FIRs downloaded", exc_info=True)
+                        logging.error("all FIRs downloaded", exc_info=True)
                 else:
-                    logging.debug("no PoA on p2", exc_info=True)
+                    logging.error("no PoA on p2", exc_info=True)
                     driver.close()
                     continue
 
@@ -213,7 +214,7 @@ def main():
                     #opening p3
                     ws_module_v1.third_page(driver)
                     # logging
-                    logging.debug("p3", exc_info=True)
+                    logging.error("p3", exc_info=True)
                     #checking if PoA is available
                     poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                           poa_dir_police,
@@ -222,7 +223,7 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
                     # logging
-                    logging.debug("cheked if PoA on p3", exc_info=True)
+                    logging.error("cheked if PoA on p3", exc_info=True)
                     if not poa_cases:
                         number_of_cases_on_all_pages.append(0)
                         logging.debug("no PoA on p3", exc_info=True)
@@ -231,19 +232,19 @@ def main():
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
-                        logging.debug(f"all FIRs downloaded {name}", exc_info=True)
+                        logging.error(f"all FIRs downloaded {name}", exc_info=True)
 
                 else:
                     driver.close()
                     # logging
-                    logging.debug(f"finished {name}", exc_info=True)
+                    logging.error(f"finished {name}", exc_info=True)
                     continue
 
                 if int(record) > 150:
                     # opening p4
                     ws_module_v1.forth_page(driver)
                     # loggingg
-                    logging.debug(f"p4 opened for {name}", exc_info=True)
+                    logging.error(f"p4 opened for {name}", exc_info=True)
                     poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                           poa_dir_police,
                                                           poa_dir_year,
@@ -251,11 +252,11 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
                     # loggingg
-                    logging.debug(f"checking for PoA in {name}", exc_info=True)
+                    logging.error(f"checking for PoA in {name}", exc_info=True)
                     if not poa_cases:
                         number_of_cases_on_all_pages.append(0)
                         # logging
-                        logging.debug(f"no PoA on p4 at {name}", exc_info=True)
+                        logging.error(f"no PoA on p4 at {name}", exc_info=True)
                     else:
                         number_of_cases_on_page = int(len(poa_cases))
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
@@ -263,17 +264,17 @@ def main():
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
                         # logging
-                        logging.debug(f"all FIRs downloaded {name}", exc_info=True)
+                        logging.error(f"all FIRs downloaded {name}", exc_info=True)
                 else:
                     # logging
-                    logging.debug(f"no PoA on p4 for {name}", exc_info=True)
+                    logging.error(f"no PoA on p4 for {name}", exc_info=True)
                     driver.close()
                     continue
 
                 if int(record) > 200:
                     ws_module_v1.fifth_page(driver)
                     # loggingg
-                    logging.debug(f"entered p5 for {name}", exc_info=True)
+                    logging.error(f"entered p5 for {name}", exc_info=True)
                     # cheking for PoA
                     poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                           poa_dir_police,
@@ -282,7 +283,7 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
                     # logging
-                    logging.debug(f"checking for act on p5 for {name}", exc_info=True)
+                    logging.error(f"checking for act on p5 for {name}", exc_info=True)
                     if not poa_cases:
                         number_of_cases_on_all_pages.append(0)
                     else:
@@ -292,17 +293,17 @@ def main():
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
                         # logging
-                        logging.debug(f"all FIRs downloaded {name}", exc_info=True)
+                        logging.error(f"all FIRs downloaded {name}", exc_info=True)
                 else:
                     # logging
-                    logging.debug(f"no PoA on page 5 in {name}", exc_info=True)
+                    logging.error(f"no PoA on page 5 in {name}", exc_info=True)
                     driver.close()
                     continue
 
                 if int(record) > 250:
                     ws_module_v1.sixth_page(driver)
                     # loggingg
-                    logging.debug(f"entered p6 of {name}", exc_info=True)
+                    logging.error(f"entered p6 of {name}", exc_info=True)
                     # cheking for PoA
                     poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                           poa_dir_police,
@@ -311,11 +312,11 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
                     # loggingg
-                    logging.debug(f"checked for PoA on p6 for {name}", exc_info=True)
+                    logging.error(f"checked for PoA on p6 for {name}", exc_info=True)
                     if not poa_cases:
                         number_of_cases_on_all_pages.append(0)
                         # logging
-                        logging.debug(f"no PoA on p6 at {name}", exc_info=True)
+                        logging.error(f"no PoA on p6 at {name}", exc_info=True)
                     else:
                         number_of_cases_on_page = int(len(poa_cases))
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
@@ -323,17 +324,17 @@ def main():
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
                         # loggingg
-                        logging.debug(f"all FIRs downloaded {name}", exc_info=True)
+                        logging.error(f"all FIRs downloaded {name}", exc_info=True)
                 else:
                     # logging
-                    logging.debug(f"no PoA on p6 for {name}", exc_info=True)
+                    logging.error(f"no PoA on p6 for {name}", exc_info=True)
                     driver.close()
                     continue
 
                 if int(record) > 300:
                     ws_module_v1.seventh_page(driver)
                     # loggingg
-                    logging.debug(f"entered p7 for {name}", exc_info=True)
+                    logging.error(f"entered p7 for {name}", exc_info=True)
                     # cheking for PoA
                     poa_cases = ws_module_v1.check_the_act(driver, poa_dir_district,
                                                           poa_dir_police,
@@ -342,10 +343,10 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
                     # logging
-                    logging.debug(f"checked for PoA on p7 for {name}", exc_info=True)
+                    logging.error(f"checked for PoA on p7 for {name}", exc_info=True)
                     if not poa_cases:
                         number_of_cases_on_all_pages.append(0)
-                        logging.debug(f"no PoA on p7 in {name}", exc_info=True)
+                        logging.error(f"no PoA on p7 in {name}", exc_info=True)
                     else:
                         number_of_cases_on_page = int(len(poa_cases))
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
@@ -353,10 +354,10 @@ def main():
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
                         # logging
-                        logging.debug(f"all FIRs downloaded {name}", exc_info=True)
+                        logging.error(f"all FIRs downloaded {name}", exc_info=True)
                 else:
                     # loggingg
-                    logging.debug(f"no PoA on p7 for {name}", exc_info=True)
+                    logging.error(f"no PoA on p7 for {name}", exc_info=True)
                     driver.close()
                     continue
 
@@ -369,7 +370,10 @@ def main():
                                                           poa_dir_date,
                                                           poa_dir_sec)
                     if not poa_cases:
+                        # taking output of 0 to list and then to csv
                         number_of_cases_on_all_pages.append(0)
+                        # logging
+                        logging.error("after checking PoA cases", exc_info=True)
                     else:
                         number_of_cases_on_page = int(len(poa_cases))
                         number_of_cases_on_all_pages.append(number_of_cases_on_page)
@@ -377,11 +381,11 @@ def main():
                         ws_module_v1.download_repeat(poa_cases, driver,
                                                     )
                         # loggingg
-                        logging.debug(f"all FIRs downloaded {name}", exc_info=True)
+                        logging.info(f"all FIRs downloaded {name}", exc_info=True)
                 else:
                     driver.close()
                     # loggingg
-                    logging.debug(f"closing dist {name}", exc_info=True)
+                    logging.info(f"closing dist {name}", exc_info=True)
                     continue
             except Exception as e:
                 logging.debug(f'{name} error\n Starting with {from_date} again', exc_info=True)
@@ -398,9 +402,10 @@ def main():
         df.to_csv(
             os.path.join(base_directory, "poa_summary", f'main_from_{from_date}_to_{to_date}.csv'))
         # loggingg
-        logging.debug(f"csv file created", exc_info=True)
+        logging.error(f"csv file created", exc_info=True)
         # add 3 days to from_date and do again
         start += datetime.timedelta(4)
+        logging.debug(f"{from_date} to {to_date} completed\n moving to next date")
 
 
 # Press the green button in the gutter to run the script.
