@@ -1,22 +1,27 @@
+"""
+1. re-birth of FIR_modules.py
+2. number of pages reduced to 8.
+3. logging added
+4. Deleting the refresh added in check available - new approach adopted in main file
+By this approch -
+the while loop will be initiated again for same date range if there's any exception
+"""
 import time
 import logging
+import os
+import pandas as pd
+
+from pathlib import Path
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 
-""" 
-1. re-birth of FIR_modules.py
-2. number of pages reduced to 8. 
-3. logging added
-4. Deleting the refresh added in check available - new approach adopted in main file
-By this approch - 
-the while loop will be initiated again for same date range if there's any exception
-"""
-
 # for logging
 logger = logging.getLogger(__name__)
+
+
 def enter_date(date1, date2, driver):
     WebDriverWait(driver, 160).until(
         ec.presence_of_element_located((By.CSS_SELECTOR,
@@ -85,6 +90,7 @@ def check_the_act(driver, poa_dir_district,
                   poa_dir_fir,
                   poa_dir_date,
                   poa_dir_sec):
+    logger.info("cheking if PoA")
     poa_list = []
 
     # check for PoA in table.
@@ -92,6 +98,14 @@ def check_the_act(driver, poa_dir_district,
     WebDriverWait(driver, 10).until(
         ec.presence_of_element_located((
             By.CSS_SELECTOR, "#ContentPlaceHolder1_gdvDeadBody")))
+    data = WebDriverWait(driver, 20).until(ec.presence_of_element_located((
+        By.CSS_SELECTOR, "#ContentPlaceHolder1_gdvDeadBody"))).get_attribute("outerHTML")
+    all_df = pd.read_html(data)
+    # 1. select 1st table as our intended dataframe
+    #2. drop last two rows as they are unnecessary
+    #3. drop column download as it has dyanamic link and not readable data.
+    # 4. take df as output for next function.
+    df = all_df[0].drop(index=[50, 51], columns="Download")
     table = driver.find_element(By.ID, "ContentPlaceHolder1_gdvDeadBody")
     rows = table.find_elements(By.TAG_NAME, "tr")
     # iterate over each row
@@ -110,11 +124,15 @@ def check_the_act(driver, poa_dir_district,
                 poa_dir_date.append(cells[6].text)
                 poa_dir_sec.append(cells[8].text)
     # logging
-    logging.debug("checked for PoA", exc_info=True)
-        
-    return poa_list
+    logger.info("checking finished\n", exc_info=True)
+    return poa_list, df
 
-
+def df_to_file(df, name, from_date, to_date):
+    # takes input from previous function - a dataframe and puts it to the file
+    file_name = f'{name}_{from_date}_{to_date}.csv'
+    dir_name = Path(f'/home/sangharsh/Documents/PoA/data/FIR/y_23/all_cases/{from_date}_{to_date}')
+    dir_name.mkdir(parents=True, exist_ok=True)
+    df.to_csv(dir_name/file_name, index=False, mode='a', header=False)
 
 def download_repeat(some_list, driver,
                     ):
@@ -135,18 +153,11 @@ def download_repeat(some_list, driver,
 
                 else:
                     continue
-
-        try:
-            new_list[i].click()
-            time.sleep(5)
-            i += 1
-            # logging
-            logging.debug("checked for PoA", exc_info=True)
-        except:
-            # logging
-            logging.debug("major error", exc_info=True)
-            i += 1
-            continue
+        new_list[i].click()
+        time.sleep(5)
+        i += 1
+        # logging
+        logger.info("downloaded", exc_info=True)
 
 
 def second_page(driver):
@@ -156,40 +167,43 @@ def second_page(driver):
                              '/td/table/tbody/tr/td[2]/a')
     p2.click()
     # logging
-    logging.debug("p2", exc_info=True)
+    logger.info("p2")
 
 
 def third_page(driver):
+    # logging
+    logger.info("p3")
     p3 = driver.find_element(By.XPATH,
                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/"
                              "table/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table"
                              "/tbody/tr[52]/td/table/tbody/tr/td[3]/a"
                              )
     p3.click()
-    # logging
-    logging.debug("p3", exc_info=True)
+
 
 
 def forth_page(driver):
+    # logging
+    logger.info("p4")
     p4 = driver.find_element(By.XPATH,
                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
                              "/tr[52]/td/table/tbody/tr/td[4]/a"
                              )
     p4.click()
-    # logging
-    logging.debug("p4", exc_info=True)
+
 
 
 def fifth_page(driver):
+    # logging
+    logger.info("p5")
     p5 = driver.find_element(By.XPATH,
                              "/html/body/form/div[4]/table/tbody/tr[4]/td/div[2]/div/table"
                              "/tbody/tr/td/table[2]/tbody/tr/td/div[3]/div[1]/table/tbody"
                              "/tr[52]/td/table/tbody/tr/td[5]/a"
                              )
     p5.click()
-    # logging
-    logging.debug("p5", exc_info=True)
+
 
 
 def sixth_page(driver):
@@ -200,7 +214,7 @@ def sixth_page(driver):
                              )
     p6.click()
     # logging
-    logging.debug("p6", exc_info=True)
+    logger.info("p6")
 
 
 def seventh_page(driver):
@@ -211,7 +225,8 @@ def seventh_page(driver):
                              )
     p7.click()
     # logging
-    logging.debug("p7", exc_info=True)
+    logger.info("p7")
+
 
 def eightth_page(driver):
     p8 = driver.find_element(By.XPATH,
@@ -221,7 +236,7 @@ def eightth_page(driver):
                              )
     p8.click()
     # logging
-    logging.debug("p8", exc_info=True)
+    logger.info("p8")
 
 
 def ninenth_page(driver):
@@ -232,4 +247,4 @@ def ninenth_page(driver):
                              )
     p9.click()
     # logging
-    logging.debug("p9", exc_info=True)
+    logger.info("p9")
