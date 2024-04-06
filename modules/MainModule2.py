@@ -2,7 +2,7 @@
 1. re-birth of ws_module_v1.py
 2. in sub directory
 3. main change : taking code for writing a dictionary from all cases out from
-check_act function and writing seperate function for the same, even before the act is checked."""
+check_act function and writing separate function for the same, even before the act is checked."""
 import logging
 import time
 from pathlib import Path
