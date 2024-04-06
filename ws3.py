@@ -1,4 +1,7 @@
 """
+issue:
+1. sometimes - it downloads same FIR twice
+2. sometimes it dosen't goes to page 2 and just creates df for page 1 repeatedly.
 1. from ws2.py
 2. approached changed so file changed
 3. if the exception is raised,
@@ -6,6 +9,7 @@ a csv file with name of remaining districts and dates will be created.
 This file will be run separately to cover those districts for those dates.
 This may need writing a new module.
 Currently, in the first step is to create csv output.
+4. No summary of PoA cases.
 
 Further Actions:
 1. module names as per style guide
@@ -23,13 +27,11 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
 
 import pageScrolModule
 import ws_module_v1
-from modules import remainingDistricts
+from modules import remainingDistricts2
 from ws_module_proxy_v1 import list_of_proxies
-
 
 
 def main():
@@ -50,20 +52,12 @@ def main():
     # 1.c url of basic page
     main_url = r'https://citizen.mahapolice.gov.in/Citizen/MH/PublishedFIRs.aspx'
 
-    # 1.d lists for taking cvs output
-    poa_dir_district = []
-    poa_dir_police = []
-    poa_dir_year = []
-    poa_dir_FIR = []
-    poa_dir_date = []
-    poa_dir_sec = []
-
     # 1.e start to end dates for year
     start = datetime.date(2023, 1, 1)
     end = datetime.date(2023, 3, 31)
 
     # 1.f ist of districts
-    ALL_Districts = ['AHMEDNAGAR', 'AKOLA', 'AMRAVATI CITY', 'AMRAVATI RURAL', 'BEED', 'BHANDARA', 'BULDHANA',
+    all_districts = ['AHMEDNAGAR', 'AKOLA', 'AMRAVATI CITY', 'AMRAVATI RURAL', 'BEED', 'BHANDARA', 'BULDHANA',
                      'CHANDRAPUR', 'CHHATRAPATI SAMBHAJINAGAR CITY', 'CHHATRAPATI SAMBHAJINAGAR (RURAL)',
                      'DHARASHIV', 'DHULE', 'GADCHIROLI', 'GONDIA', 'HINGOLI', 'JALGAON', 'JALNA',
                      'KOLHAPUR', 'LATUR', 'Mira-Bhayandar, Vasai-Virar Police Commissioner',
@@ -89,7 +83,7 @@ def main():
         # covert to string
         from_date = start.strftime("%d%m%Y")
         to_date = d2.strftime("%d%m%Y")
-        #logging- set at warning level to take console output
+        # logging- set at warning level to take console output
         logger.warning(f"start {from_date}")
         # constant for outer loop
         # download directory path
@@ -100,9 +94,7 @@ def main():
             os.mkdir(download_directory)
 
         # 3. inner loop for each district
-        for name in ALL_Districts:
-            # variables
-            number_of_cases_on_all_pages = []
+        for name in all_districts:
             # set profile for saving directly without pop-up ref -
             # https://stackoverflow.com/a/29777967
             options = Options()
@@ -119,19 +111,19 @@ def main():
             options.set_preference("dom.webdriver.enabled", False)
             options.set_preference('useAutomationExtension', False)
             options.set_preference("pdfjs.disabled", True)
-            service = Service('C:\\BrowserDrivers\\geckodriver.exe')
+            # service = Service('C:\\BrowserDrivers\\geckodriver.exe')
             options.headless = True
 
             # change IP
-            myProxy = list_of_proxies()
+            my_proxy = list_of_proxies()
             proxy = Proxy({
                 'proxyType': ProxyType.MANUAL,
-                'httpProxy': myProxy[ALL_Districts.index(name)],
-                'ftpProxy': myProxy[ALL_Districts.index(name)],
-                'sslProxy': myProxy[ALL_Districts.index(name)],
+                'httpProxy': my_proxy[all_districts.index(name)],
+                'ftpProxy': my_proxy[all_districts.index(name)],
+                'sslProxy': my_proxy[all_districts.index(name)],
                 'noProxy': ''  # set this value as desired
             })
-            #check - pycharm saying argument 'proxy' is unexpected
+            # check - pycharm saying argument 'proxy' is unexpected
             try:
                 driver = webdriver.Firefox(options=options, proxy=proxy)
                 open_page()
@@ -146,7 +138,7 @@ def main():
                 ws_module_v1.view_record(driver)
                 # call search
                 ws_module_v1.search(driver=driver)
-                # view 50 records, that is max, per page
+                # how many cases in district?
                 record = ws_module_v1.number_of_records(driver=driver)
                 if record != '':
                     pass
@@ -154,32 +146,35 @@ def main():
                     logger.warning(f"completed {name}\n. No records Founds\n")
                     driver.close()
                     continue
-                scroll_pages = pageScrolModule.scrollPages(
+                scroll_pages = pageScrolModule.scrollpages(
                     record=record, name=name, driver=driver,
                     from_date=from_date, to_date=to_date)
                 if scroll_pages:
+                    logger.info("function scrollpages testing")
                     continue
                 else:
                     driver.close()
                     # logging
-                    logger.info('need to take the list of remaining districts\n'
-                                ' due to exception', exc_info=True)
-                    remainingDistricts.districtWithProblem(name_of_problem=name,
-                                                           from_date=from_date,
-                                                           to_date=to_date)
-                    start += datetime.timedelta(4)
-                    break
+                    logger.info(f'need to take the list of remaining districts\n'
+                                f' due to exception\n {from_date} finished.', exc_info=True)
+                    remainingDistricts2.districtWithProblem(name_of_problem=name,
+                                                            from_date=from_date,
+                                                            to_date=to_date,
+                                                            record=record)
+                    continue
 
             except Exception as e:
                 # logging
                 logger.warning('did not even enter page scroll\n'
                                'writing to remaining district')
                 # write to the file for remaining districts.
-                remainingDistricts.districtWithProblem(name_of_problem=name,
-                                                       from_date=from_date,
-                                                       to_date=to_date)
-                start += datetime.timedelta(4)
+                remainingDistricts2.districtWithProblem(name_of_problem=name,
+                                                        from_date=from_date,
+                                                        to_date=to_date,
+                                                        record="0")
                 continue
+        start += datetime.timedelta(4)
+
 
 if __name__ == '__main__':
     main()
