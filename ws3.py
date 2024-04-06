@@ -2,6 +2,7 @@
 issue:
 1. sometimes - it downloads same FIR twice
 2. sometimes it dosen't goes to page 2 and just creates df for page 1 repeatedly.
+description:
 1. from ws2.py
 2. approached changed so file changed
 3. if the exception is raised,
@@ -27,10 +28,11 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.firefox.options import Options
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
+from modules import AllPages2
 
-import pageScrolModule
-import ws_module_v1
-from modules import remainingDistricts2
+from modules import remainingDistricts3, MainModule3
 from ws_module_proxy_v1 import list_of_proxies
 
 
@@ -84,7 +86,7 @@ def main():
         from_date = start.strftime("%d%m%Y")
         to_date = d2.strftime("%d%m%Y")
         # logging- set at warning level to take console output
-        logger.warning(f"start {from_date}")
+        logger.warning(f"\n\nstart {from_date}")
         # constant for outer loop
         # download directory path
         download_directory = os.path.join(base_directory,
@@ -128,47 +130,36 @@ def main():
                 driver = webdriver.Firefox(options=options, proxy=proxy)
                 open_page()
                 # enter the date
-                ws_module_v1.enter_date(date1=from_date, date2=to_date, driver=driver)
+                MainModule3.enter_date(date1=from_date, date2=to_date, driver=driver)
                 # enter district
-                ws_module_v1.district_selection(name, driver=driver)
+                MainModule3.district_selection(name, driver=driver)
                 logger.warning(f'{name} Started')
                 # creation of list. These lists will be converted to dictionary to write to csv
                 # call the value of records to view @ 50
                 time.sleep(3)
-                ws_module_v1.view_record(driver)
+                MainModule3.view_record(driver)
                 # call search
-                ws_module_v1.search(driver=driver)
+                MainModule3.search(driver=driver)
                 # how many cases in district?
-                record = ws_module_v1.number_of_records(driver=driver)
+                record = MainModule3.number_of_records(driver=driver)
                 if record != '':
                     pass
                 else:
                     logger.warning(f"completed {name}\n. No records Founds\n")
-                    driver.close()
-                    continue
-                scroll_pages = pageScrolModule.scrollpages(
-                    record=record, name=name, driver=driver,
-                    from_date=from_date, to_date=to_date)
-                if scroll_pages:
-                    logger.info("function scrollpages testing")
-                    continue
-                else:
-                    driver.close()
-                    # logging
-                    logger.info(f'need to take the list of remaining districts\n'
-                                f' due to exception\n {from_date} finished.', exc_info=True)
-                    remainingDistricts2.districtWithProblem(name_of_problem=name,
+                    remainingDistricts3.districtWithProblem(name_of_problem=name,
                                                             from_date=from_date,
                                                             to_date=to_date,
                                                             record=record)
+                    driver.close()
                     continue
-
-            except Exception as e:
+                AllPages2.scroll_pages(record=record, name=name, driver=driver,
+                                       from_date=from_date, to_date=to_date)
+            except (NoSuchElementException, StaleElementReferenceException):
                 # logging
                 logger.warning('did not even enter page scroll\n'
-                               'writing to remaining district')
+                               'writing to remaining district', exc_info=True)
                 # write to the file for remaining districts.
-                remainingDistricts2.districtWithProblem(name_of_problem=name,
+                remainingDistricts3.districtWithProblem(name_of_problem=name,
                                                         from_date=from_date,
                                                         to_date=to_date,
                                                         record="0")
