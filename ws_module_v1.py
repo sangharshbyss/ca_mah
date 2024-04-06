@@ -80,6 +80,7 @@ def search(driver):
 def number_of_records(driver):
     total_number = driver.find_element(By.CSS_SELECTOR,
                                        '#ContentPlaceHolder1_lbltotalrecord').text
+    logger.warning(total_number)
     return total_number
 
 
@@ -105,7 +106,11 @@ def check_the_act(driver, poa_dir_district,
     #2. drop last two rows as they are unnecessary
     #3. drop column download as it has dyanamic link and not readable data.
     # 4. take df as output for next function.
-    df = all_df[0].drop(index=[50, 51], columns="Download")
+    df_with_last_rows = all_df[0].drop(columns="Download")
+    df = df_with_last_rows.drop(df_with_last_rows.tail(2).index)
+    logger.warning("printing df\n", exc_info=True)
+    print(df.tail(2))
+    logger.info("printed df \n")
     table = driver.find_element(By.ID, "ContentPlaceHolder1_gdvDeadBody")
     rows = table.find_elements(By.TAG_NAME, "tr")
     # iterate over each row
